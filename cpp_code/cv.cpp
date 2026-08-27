@@ -1,3 +1,5 @@
+//this is MISRA based. If you do not know the MISRA rules, or want to reference them : https://www.mathworks.com/help/bugfinder/misra-cpp-2023-rules-and-directives.html
+
 #include <stdio.h>
 #include <cstdint>
 #include <opencv2/opencv.hpp> 
