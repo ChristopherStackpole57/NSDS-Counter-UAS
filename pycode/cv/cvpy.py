@@ -44,4 +44,4 @@ def aim(model_path, camera_index=0, takeoff_alt=0.2):
     cap.release()
     cv.destroyAllWindows()
 
-aim("yolo26n.pt")
+aim(".pt") #to be changed
