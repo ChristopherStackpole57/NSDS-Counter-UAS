@@ -1,172 +1,288 @@
+import math
+
 import numpy as np
 import numpy.typing as npt
 
-from coordinate_conversions import rae_xyz
+from coordinate_conversions import rae_xyz, xyzv_raer
 
-# some terms
-# z_n               measured state vector at a time step n
-# xhat_n,n          estimated system state vector at any time step n
-# xhat_n+1,n        predicated system state vector at any time step n
-# u_n               control variable or input variable representing known external inputs to the system
-# F                 state transition matrix
-# G                 control matrix or input matrix which maps an input to a state vector
-# P_n,n             covariance matrix of the current state
-# P_n+1,n           covariance matrix of the predicated state
-# Q                 process noise matrix
-# H                 observation matrix which maps a state variable to the measured system
-# p_n,n-1           predicted state variance
-# r_n               measurement variance
+class UKF:
+    def __init__(self, initial_state, initial_covariance, process_noise):
+        """Initialize UKF class members.
+        
+        Keyword Args:
+            initial_state -- the initial statevector of the target
+            initial_covariance -- the covariance of the initial statevector
+            process_noie -- the estimated process noise of the initial statevector
+        """
+        self._statevector = np.asarray(initial_state, dtype=float)
+        self._covariance = np.asarray(initial_covariance, dtype=float)
+        self._process_noise = np.asarray(process_noise, dtype=float)
 
-###################################################
-# Kalman Filter
+    ###################################################
+    # Kalman Utility
 
-def generate_process_noise_matrix(x_variance: float, y_variance: float, z_variance: float, 
-    vx_variance: float, vy_variance: float, vz_variance: float) -> npt.NDArray[any]:
-    """Returns a process noise (covariance) matrix from the variances of various values.
+    def _generate_sigma_points(xhat, covariance):
+        """Return a collection of sigma points generated from a statevector and the covariance of the statevector.
+        Also returns the weights associated with the sigma points.
+        
+        Sigma points are deterministic samples that represent the mean and covariance of a state estimate.
+        Sigma points can be propagated through nonlinear functions to approximate the resulting mean and covariance.
 
-    Keyword Args:
-        x_variance -- the variance in the x measurement
-        y_variance -- the vriance in the y measurement
-        z_variance -- the variance in the z measurement
-        vx_variance -- the variance in the x velocity measurement
-        vy_variance -- the variance in the y velocity measurement
-        vz_variance -- the variance in the z velocity measurement
-    """
-    # TODO: very simple and conceptual version
-    process_noise_matrix = np.array([
-        [ x_variance, 0, 0, 0, 0, 0 ],
-        [ 0, y_variance, 0, 0, 0, 0 ],
-        [ 0, 0, z_variance, 0, 0, 0 ],
-        [ 0, 0, 0, vx_variance, 0, 0 ],
-        [ 0, 0, 0, 0, vy_variance, 0 ],
-        [ 0, 0, 0, 0, 0, vz_variance ]
-    ])
-    return process_noise_matrix
+        Keyword Args:
+            xhat -- a statevector, could be current or predicted
+            covariance -- the covariance of the given statevector
+        """
 
-def generate_process_noise_from_matrix(process_noise_matrix: npt.NDArray[any]) -> npt.NDArray[any]:
-    """Returns a process noise sample from a process noise matrix.
+        xhat = np.asarray(xhat, dtype=float)        # Ensure xhat is an np array
+        P = np.asarray(covariance, dtype=float)     # Ensure covariance is an np array
 
-    Keyword Args:
-        process_noise_matrix -- the covariance matrix describing the process noise distribution
-    """
-    rng = np.random.default_rng(seed=42)
-    samples = rng.multivariate_normal([ 0, 0, 0, 0, 0, 0 ], process_noise_matrix)
+        n = xhat.size
+        point_count = 2*n + 1
 
-    return samples
+        # UKF Scaling Parameters
+        alpha = 1e-3        # NOTE: controls the spread of sigma points around the mean
+        beta = 2.0          # NOTE: adjusts the central point's covariance to account for prior knowledge
+        kappa = 0.0         # NOTE: secondary scaling parameter that affects the spread based on the state dimension
 
-def generate_initial_statevector(measurement_0, measurement_1, delta_time: float) -> npt.NDArray[any]:
-    """Returns an initial xyzv statevector from two RAER' measurements and a time difference.
-    Measurements are expected to be of the form: [ range, azimuth, elevation, range rate ]
+        alpha_sq = alpha*alpha
 
-    Keyword Args:
-        measuremenet_0 -- a chronologically earlier RAER' measurement
-        measurement_ 1 -- a chronologically later RAER' measurement
-        delta_time -- the time difference between both measurements
-    """
+        # λ = α^{2} (n +  κ) - n
+        lam = alpha_sq * (n + kappa) - n
+        L = np.linalg.cholesky((n + lam) * P)
 
-    # Generate XYZ positions from the RAE components of the measurements
-    measurement_0_xyz = rae_xyz(tuple(measurement_0[:3]))
-    measurement_1_xyz = rae_xyz(tuple(measurement_1[:3]))
+        # Create sigma points from generated offsets
+        sigma_points = [xhat]
+        for i in range(n):
+            offset = L[:, i]
 
-    x0, y0, z0 = measurement_0_xyz
-    x1, y1, z1 = measurement_1_xyz
+            sigma_points.append(xhat + offset)
+            sigma_points.append(xhat - offset)
 
-    vx = (x1 - x0) / delta_time
-    vy = (y1 - y0) / delta_time
-    vz = (z1 - z0) / delta_time
+        # Calculate sigma point weights
+        mean_weights = np.full(point_count, 1.0 / (2.0 * (n + lam)))
+        covariance_weights = mean_weights.copy()
 
-    initial = np.array([x1, y1, z1, vx, vy, vz ])
-    return initial
+        mean_weights[0] = lam / (n + lam)
+        covariance_weights[0] = mean_weights[0] + (1.0 - alpha_sq) + beta
 
-def predict_statevector(current: npt.NDArray[any], process_noise, delta_time: float):
-    """Predicts a statevector using the state extrapolation equation from some current statevector, process noise, and the
-    time step between the current statevector and the predicted statevector.
+        return sigma_points, mean_weights, covariance_weights
 
-    Keyword Args:
-        current -- the current statevector
-        process_noise -- the process noise
-        delta_time -- the time step between statevectors
-    """
+    def _generate_gain(predicted, predicted_covariance, measurement_covariance):
+        """Returns the kalman gain, predicted measurement, and uncertainty of the predicted state, calculated from
+        the current prediction, the covariance of that prediction, and the covariance of the measurement.
 
-    # The predicted statevector is given by the state extrapolation:
-    # xhat_n+1,n = F xhat_n,n + G u_n + w_n
-    # predicted state = transition matrix * current state + input transition matrix * input variable + process noise
-    # NOTE: for now we are ignoring input variables
+        The Kalman Gain is used as a sort of weighting between the prediction and the measurement. Because both the
+        predicted state and the measured state have some uncertainty to them, neither can be fully trusted and so the most
+        reliable method is to find some average of the two. Because the uncertainties will differ, taking an evenly weighted
+        average is naive and it is instead better to analyze the uncertainties of each component and generate a weight from
+        those uncertainties. The Kalman Gain returned by this method is a weighting applied to balance the uncertainties of
+        the prediction and the measurement.
 
-    # transition matrix for a constant velocity xyzv model is given by:
-    transition = np.array([
-        [ 1, 0, 0, delta_time, 0, 0 ],      # x_n+1 = x_n + v_n * Δt
-        [ 0, 1, 0, 0, delta_time, 0 ],      # y_n+1 = y_n + v_y * Δt
-        [ 0, 0, 1, 0, 0, delta_time ],      # z_n+1 = z_n + v_z * Δt
-        [ 0, 0, 0, 1, 0, 0 ],
-        [ 0, 0, 0, 0, 1, 0 ],
-        [ 0, 0, 0, 0, 0, 1 ]
-    ])
+        Keyword Args:
+            predicted -- the predicted statevector
+            predicted_covariance -- the covariance of the predicted statevector
+            measurement_covariance -- the covariance of the measurement
+        """
+        n = predicted.size
+        point_count = 2*n + 1
 
-    predicted = transition @ current + process_noise
-    return predicted
+        sigma_points, mean_weights, covariance_weights = UKF._generate_sigma_points(predicted, predicted_covariance)
 
-def kalman_gain():
-    """
+        # Convert sigma points to measurement space
+        measurement_points = np.asarray([
+            xyzv_raer(point) for point in sigma_points
+        ])
 
-    """
+        # Create a predicted measurement from the weighted average of the sigma points in measurement space
+        z_predicted = np.sum(
+            mean_weights[:, None] * measurement_points,
+            axis = 0
+        )
 
-    # determine multivariate kalman gain from unscented kalman gain model:
-    # K = P_xz S^-1
+        # Get the deviataions of the sigma points in measurement space
+        dz = measurement_points - z_predicted
 
-    pass
+        # Get the deviations of the sigma points in state space
+        dx = sigma_points - predicted
 
-def update_statevector(measured, predicted, gain):
-    """
+        R = np.asarray(measurement_covariance, dtype=float)
+        S = R.copy()
 
-    """
+        # Create the state measurement cross covariance
+        P_xz = np.zeros((n, z_predicted.size))
+        for i in range(point_count):
+            S += covariance_weights[i] * np.outer(dz[i], dz[i])
+            P_xz += covariance_weights[i] * np.outer(dx[i], dz[i])
 
-    # The updated statevector is given by:
-    # xhat_n,n = xhat_n,n-1 + K_n (z_n - xhat,n,n-1)
-    # updated state = predicated state + kalman gain * (measured state - predicated state)
+        # Get the kalman gain
+        K = np.linalg.solve(S, P_xz.T).T
 
-    # the innovation is another name for the term: measured state - predicated state
+        return K, z_predicted, S
 
-    updated = predicted + gain @ (measured - predicted)
-    return updated
+    ###################################################
+    # Kalman Core
 
-def kalman():
-    # covariance extrapolation:
-    # P_n+1,n = F P_n,n F^T + Q
+    def _predict_ukf(current, covariance, process_noise, delta_time):
+        """Returns a predicted statevector and the covariance of the prediction.
 
+        Sigma points are generated from the current state estimate and propagated through the
+        (constant velocity) motion model. The propagated points are used to calculate the predicted
+        state mean and covariance.
 
+        Keyword Args:
+            current -- the current statevector estimate
+            covariance -- the current state covariance matrix
+            process_noise -- the process noise covariance matrix
+            delta_time -- the time step between statevector prediction
+        """
+        sigma_points, mean_weights, covariance_weights = UKF._generate_sigma_points(current, covariance)
 
-    # multivariate kalmain gain:
-    # K_n = P_n,n-1 H^T (H P_n,n-1 H^T + R_n)^-1
+        F = np.array([
+            [1, 0, 0, delta_time, 0, 0],
+            [0, 1, 0, 0, delta_time, 0],
+            [0, 0, 1, 0, 0, delta_time],
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1]
+        ], dtype=float)
+        Q = np.asarray(process_noise, dtype=float)
 
+        # Propagate each sigma point through the motion model
+        propagated_points = np.asarray([
+            F @ point for point in sigma_points
+        ])
 
+        # Predicted state mean
+        predicted = np.sum(
+            mean_weights[:, None] * propagated_points,
+            axis=0
+        )
 
-    # one dimensional covariance update equation:
-    # p_n,n = (1 - K_n)p_n,n-1
+        # Predicted state covariance
+        predicted_covariance = Q.copy()
 
+        for i in range(2 * len(current) + 1):
+            deviation = propagated_points[i] - predicted
+            predicted_covariance += covariance_weights[i] * np.outer(deviation, deviation)
 
+        return predicted, predicted_covariance
 
-    # multivariate covariance update equation:
-    # P_n,n = (I - K_n H)P_n,n-1 (I - K_n H)^T + K_n R_n K_n^T
+    def _update_ukf(predicted, predicted_covariance, measurement, measurement_covariance):
+        """Returns an updated statevector and a covariance for the updated statevector based on the predicted statevector,
+        the measurement, and the covariances of each.
+        
+        Keyword Args:
+            predicted -- the predicted statevector
+            predicted_covariance -- the covariance of the predicted statevector
+            measurement -- the measured statevector
+            measurement_covariance -- the covariance of the measurement
+        """
+        K, z_predicted, S = UKF._generate_gain(predicted, predicted_covariance, measurement_covariance)
 
-    pass
+        # Calculate Innovation from measurement and the predicted measurement
+        innovation = measurement - z_predicted
 
+        # Wrap the azimuth and elevation components of the innovation to [-1, 1]
+        innovation[1] = (innovation[1] + np.pi) % (2.0 * np.pi) - np.pi
+        innovation[2] = (innovation[2] + np.pi) % (2.0 * np.pi) - np.pi
 
+        updated = predicted + K @ innovation
+        updated_covariance = predicted_covariance - K @ S @ K.T
 
+        return updated, updated_covariance
 
+    ###################################################
+    # Public Interface
+
+    def update(self, measurement, measurement_covariance, delta_time):
+        """Returns an updated statevector and covariance from the next measurement and the
+        delta time. This updated statevector takes into consideration the computed prediction for 
+        the statevector, as well as the measured statevector, and the uncertainties of both in
+        order to reach a middle ground that is believed to be more accurate than either the prediction
+        or the measurement.
+
+        Keyword Args:
+            measurement -- the measured RAER position of the target
+            measurement_covariance -- the covariance of the measurement, derived from infomration about the sensors
+            delta_time -- the time step between consecutive measurements
+        """
+        # Predict the state and covariance
+        predicted_state, predicted_covariance = UKF._predict_ukf(
+            self._statevector,
+            self._covariance,
+            self._process_noise,
+            delta_time
+        )
+
+        # Correct the prediction using the measurement
+        updated_state, updated_covariance = UKF._update_ukf(
+            predicted_state,
+            predicted_covariance,
+            measurement,
+            measurement_covariance
+        )
+
+        self._statevector = updated_state
+        self._covariance = updated_covariance
+
+        return self._statevector, self._covariance
+
+    ###################################################
+    # Public Utilities
+
+    def generate_process_noise(delta_time, acceleration_noise_intensity):
+        """Returns a process noise matrix that is generated from a time step and a guess
+        at the affects of the UKF model not accounting for acceleration. The acceleration
+        noise intensity should be adjusted to make the model more accurate.
+
+        Keyword Args:
+            delta_time -- the time step between consecutive measurements
+            acceleration_noise_intensity -- an parameter controlling how strong the affects of acceleration are estimated to be
+        """
+        dt = delta_time
+        q = acceleration_noise_intensity
+
+        position_noise = (dt**3) / 3.0
+        position_velocity_noise = (dt**2) / 2.0
+        velocity_noise = dt
+
+        Q = q * np.block([
+            [position_noise * np.eye(3), position_velocity_noise * np.eye(3)],
+            [position_velocity_noise * np.eye(3), velocity_noise * np.eye(3)]
+        ])
+
+        return Q
 
 # TESTING
+# NOTE & TODO: these values are made up in order to test the functionality of UKF. These values and the ones
+# used in UKF WILL need to change as test data becomes available.
+initial_statevector = np.array([
+    100.0, 0.0, 0.0,                # x, y, z
+    10.0, 0.0, 0.0                  # vx, vy, vz
+])
 
-z0 = [100, 0, 0, 10]
-z1 = [105, 0, 0, 10]
-dt = 0.5
+initial_covariance = np.diag([
+    25.0, 25.0, 25.0,
+    4.0, 4.0, 4.0
+])
 
-initial_statevector = generate_initial_statevector(z0, z1, dt)
-print(f'Initial Statevector: {initial_statevector}')
+delta_time = 0.5
+acceleration_noise_intensity = 1.0
 
-Q = generate_process_noise_matrix(1, 1, 1, 2, 2, 2)
-w = generate_process_noise_from_matrix(Q)
-print(f'Process Noise: {w}')
+process_noise = UKF.generate_process_noise(delta_time, acceleration_noise_intensity)
 
-predicted_statevector = predict_statevector(initial_statevector, w, 0.5)
-print(f'Predicted Statevector: {predicted_statevector}')
+ukf = UKF(initial_statevector, initial_covariance, process_noise)
+
+z1 = np.array([
+    102.0,      # range
+    0.01,       # azimuth
+    0.005,      # elevation
+    9.5,        # range rate
+])
+
+z1_covariance = np.diag([
+    4.0, 0.0001, 0.0001, 0.25 
+])
+
+updated_state, updated_covariance = ukf.update(z1, z1_covariance, delta_time)
+print(f'Updated State: {updated_state}\nUpdated Covariance: {updated_covariance}')
