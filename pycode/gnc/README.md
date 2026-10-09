@@ -42,5 +42,6 @@ some control systems
 
 ### Coordinate Systems:
 
+    LLA:    Latitude, Longitude, Elevation
     NED:    North East Down
     RAE:    Range, Azimuth, and Elevation
