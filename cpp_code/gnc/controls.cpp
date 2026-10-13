@@ -14,13 +14,16 @@ double NowSeconds() noexcept {
 
 }  // namespace
 
+// A prev_time of 0 means "unseeded", not "started at time zero". Stamping
+// here keeps the first dt at one control period, not the whole uptime.
 ControlEngine::ControlEngine(double kp, double ki, double kd, double integral,
                              double prev_error, double prev_time)
-    : kp_(kp), ki_(ki), kd_(kd), integral_(integral), prev_error_(prev_error) {
-  // A prev_time of 0 means "unseeded", not "started at time zero". Stamping
-  // here keeps the first dt at one control period, not the whole uptime.
-  prev_time_ = (prev_time == 0.0) ? NowSeconds() : prev_time;
-}
+    : kp_(kp),
+      ki_(ki),
+      kd_(kd),
+      integral_(integral),
+      prev_error_(prev_error),
+      prev_time_((prev_time == 0.0) ? NowSeconds() : prev_time) {}
 
 double ControlEngine::get_kp() const noexcept { return kp_; }
 
@@ -34,7 +37,7 @@ double ControlEngine::get_prev_error() const noexcept { return prev_error_; }
 
 double ControlEngine::get_prev_time() const noexcept { return prev_time_; }
 
-double ControlEngine::PID(double error) noexcept {
+double ControlEngine::PID(const double error) noexcept {
   const double current_time = NowSeconds();
   const double dt = current_time - prev_time_;
   prev_time_ = current_time;
@@ -49,9 +52,7 @@ double ControlEngine::PID(double error) noexcept {
   // Guards the divide: the first frame, or two calls inside one clock tick,
   // can give dt <= 0.
   double derivative_term = 0.0;
-  if (dt > 0.0) {
-    derivative_term = (error - prev_error_) / dt;
-  }
+  if (dt > 0.0) derivative_term = (error - prev_error_) / dt;
   derivative_term *= kd_;
   prev_error_ = error;
 
