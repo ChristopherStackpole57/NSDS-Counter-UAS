@@ -1,0 +1,5 @@
+The project follows the MISRA rules for safety-criticla systems. MISRA comes from the automotive industry, and whilst it may seem confusing at first, these rules are
+the closest to our product. It would, initially, make more sense to follow the NASA rules, but keep in mind we are talking about a C-UAS product vs a rocket which is
+twice the size of the Bell Tower. 
+
+MISRA Rules : https://meetingcpp.com/mcpp/slides/2025/Misra_talk_CppMeeting775955.pdf

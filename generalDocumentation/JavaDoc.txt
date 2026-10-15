@@ -1,0 +1,4 @@
+For our comments we use the JavaDoc style. For everything else we follow the Google style cheat sheet.
+
+JavaDoc :  https://docs.oracle.com/en/java/javase/25/docs/specs/javadoc/doc-comment-spec.html
+Google C++ Cheat Sheet :  https://google.github.io/styleguide/cppguide.html
