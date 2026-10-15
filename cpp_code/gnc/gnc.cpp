@@ -1,13 +1,12 @@
 #include "gnc.h"
 
-gnc::GNCEngine::GNCEngine()
-	: control_engine(0, 0, 0)
-{
+namespace gnc {
 
+GNCEngine::GNCEngine()
+  : control_engine(0, 0, 0) {}
+
+void GNCEngine::receive_target_packages(const std::vector<TargetPackage> target_packages) noexcept {
+  return;
 }
 
-void gnc::GNCEngine::receive_target_packages(std::vector<TargetPackage> target_packages)
-{
-	// TODO: parse target packages
-	return;
-}
+}  // namespace gnc

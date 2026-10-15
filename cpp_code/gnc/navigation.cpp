@@ -1,6 +1,7 @@
 #include "navigation.h"
 
-gnc::NavigationEngine::NavigationEngine()
-{
+namespace gnc {
 
-}
+NavigationEngine::NavigationEngine() {}
+
+}  // namespace gnc
