@@ -29,12 +29,12 @@ class ControlEngine {
   ControlEngine(const ControlEngine&) = delete;
   ControlEngine& operator=(const ControlEngine&) = delete;
 
-  double get_kp() const noexcept;
-  double get_ki() const noexcept;
-  double get_kd() const noexcept;
-  double get_integral() const noexcept;
-  double get_prev_error() const noexcept;
-  double get_prev_time() const noexcept;
+  [[nodiscard]] double get_kp() const noexcept;
+  [[nodiscard]] double get_ki() const noexcept;
+  [[nodiscard]] double get_kd() const noexcept;
+  [[nodiscard]] double get_integral() const noexcept;
+  [[nodiscard]] double get_prev_error() const noexcept;
+  [[nodiscard]] double get_prev_time() const noexcept;
 
   /**
    * @brief Estimates and corrects the aiming error for one control step.

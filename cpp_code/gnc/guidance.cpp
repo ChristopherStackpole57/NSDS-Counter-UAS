@@ -1,6 +1,7 @@
 #include "guidance.h"
 
-gnc::GuidanceEngine::GuidanceEngine()
-{
+namespace gnc {
 
-}
+GuidanceEngine::GuidanceEngine() {}
+
+}  // namespace gnc
