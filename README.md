@@ -30,4 +30,5 @@ To begin contributing:
 
 ## Contact
 
-TODO: add contact info
+Purdue NSDS: https://discord.gg/qYq5WqPUwh
+C-UAS Systems Lead: Mark Tudor Haiduc @duffyduckz 
