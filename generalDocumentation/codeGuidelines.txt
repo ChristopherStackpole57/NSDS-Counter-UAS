@@ -1,0 +1,11 @@
+The following guidelines are used when writing code for this project: 
+
+JavaDoc :  https://docs.oracle.com/en/java/javase/25/docs/specs/javadoc/doc-comment-spec.html
+Google C++ Cheat Sheet :  https://google.github.io/styleguide/cppguide.html
+
+To ensure safety-critical systems compliance, we follow the MISRA C++ rules : 
+
+https://meetingcpp.com/mcpp/slides/2025/Misra_talk_CppMeeting775955.pdf
+
+These rules are set in place to make it easy for people to be onboarded onto the project and to ensure that style differences, especially when it comes to C++, do not
+get in our way. 
