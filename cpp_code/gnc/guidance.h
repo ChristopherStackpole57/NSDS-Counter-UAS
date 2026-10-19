@@ -23,8 +23,9 @@ namespace gnc {
   */
 class GuidanceEngine {
   public:
-    GuidanceEngine();
+    GuidanceEngine() = default;
     GuidanceEngine(const GuidanceEngine&) = delete;
+    ~GuidanceEngine() = default;
     GuidanceEngine& operator=(const GuidanceEngine&) = delete;
 
     /**
