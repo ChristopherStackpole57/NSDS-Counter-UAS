@@ -1,8 +1,9 @@
 import cv2 as cv
+from pathlib import Path
 from ultralytics import YOLO
 import time
-
-def aim(model_path, camera_index=0, takeoff_alt=0.2):
+pt = "drone26n.pt"
+def aim(model_path, camera_index=0, takeoff_alt=0.2, conf=0.1):
     model = YOLO(model_path)
     cap = cv.VideoCapture(camera_index)
     if not cap.isOpened():
@@ -17,7 +18,7 @@ def aim(model_path, camera_index=0, takeoff_alt=0.2):
         if not ret:
             break
 
-        results = model(frame, verbose=False)
+        results = model(frame, verbose=False, conf=conf)
 
         #current_time = time.time()
         #prev_time = current_time
@@ -25,8 +26,8 @@ def aim(model_path, camera_index=0, takeoff_alt=0.2):
 
         if len(results[0].boxes) > 0:
             boxes     = results[0].boxes
-            #quick human detectio only
-        
+            '''
+            depreciated human detection
             mask = results[0].boxes.cls == 0 #mask 
             humans = results[0].boxes[mask] #get only humans
             for human in humans :
@@ -34,6 +35,13 @@ def aim(model_path, camera_index=0, takeoff_alt=0.2):
                 cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 1)
                 confidence = human.conf[0].item() #item() convers from tensor to float
                 cv.putText(frame, f'human : confidence : {confidence:.2f}', (int(x1),int(y1)), cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            '''
+
+            for drone in results[0].boxes:
+                x1,y1,x2,y2 = drone.xyxy[0]
+                cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 1)
+                confidence = drone.conf[0].item()
+                cv.putText(frame, f'drone : confidence : {confidence:.2f}', (int(x1),int(y1)), cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
         else:
             pass
 
@@ -44,4 +52,6 @@ def aim(model_path, camera_index=0, takeoff_alt=0.2):
     cap.release()
     cv.destroyAllWindows()
 
-aim(".pt") #to be changed
+# aim(Path(__file__).parent.parent / "yolo26n.pt")
+# aim(Path(__file__).parent.parent / "drone26n.pt")
+aim(Path(__file__).parent.parent / pt)

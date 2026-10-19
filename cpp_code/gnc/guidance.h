@@ -1,5 +1,15 @@
+// Copyright [2026] Purdue National Security and Defense Society
 #ifndef NSDS_COUNTER_UAS_CPP_CODE_GNC_GUIDANCE_H_
 #define NSDS_COUNTER_UAS_CPP_CODE_GNC_GUIDANCE_H_
+
+#include <vector>
+
+#include "utility/math/Math.h"
+
+// Forward Declarations
+namespace util::datatypes {
+struct TargetPackage;
+}
 
 namespace gnc {
 
@@ -17,6 +27,13 @@ class GuidanceEngine {
     GuidanceEngine(const GuidanceEngine&) = delete;
     ~GuidanceEngine() = default;
     GuidanceEngine& operator=(const GuidanceEngine&) = delete;
+
+    /**
+     * @brief Guidance engine entry point. Receives a list of target packages and determines which to aim at and applies a ballistic lead offset.
+     * @param target_packages a vector of target packages for processing.
+     * @return The absolute sentry target statevector to aim at.
+     */
+    [[nodiscard]] util::math::Vector3d determine_target_statevector(const std::vector<util::datatypes::TargetPackage>& target_packages) const noexcept;
 };
 
 }  // namespace gnc
