@@ -1,5 +1,8 @@
+// Copyright [2026] Purdue National Security and Defense Society
 #ifndef NSDS_COUNTER_UAS_CPP_CODE_GNC_NAVIGATION_H_
 #define NSDS_COUNTER_UAS_CPP_CODE_GNC_NAVIGATION_H_
+
+#include "utility/math/Math.h"
 
 namespace gnc {
 
@@ -16,6 +19,12 @@ class NavigationEngine {
     NavigationEngine();
     NavigationEngine(const NavigationEngine&) = delete;
     NavigationEngine& operator=(const NavigationEngine&) = delete;
+
+    /**
+     * @brief Determines the current statevector of the sentry.
+     * @return The current statevector of the sentry.
+     */
+    [[nodiscard]] util::math::Vector2d get_current_statevector() const noexcept;
 };
 
 }  // namespace gnc
