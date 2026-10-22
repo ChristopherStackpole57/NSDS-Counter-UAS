@@ -1,0 +1,139 @@
+{
+	"configurations" : 
+	[
+		{
+			"abstractTargets" : [],
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"jsonFile" : "directory-.-Debug-f040eec181a89de70dbe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "utility",
+					"jsonFile" : "directory-utility-Debug-2036f2d1f45ae6a07272.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "utility",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "gnc",
+					"jsonFile" : "directory-gnc-Debug-967b31c583d03b3c32a5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "gnc",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "lidar",
+					"jsonFile" : "directory-lidar-Debug-d580a75a1c7c7bae6d6f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "lidar",
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					],
+					"name" : "NSDS_CUAS",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "NSDS_CUAS::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-NSDS_CUAS-Debug-7d74f09a6eb8081e654c.json",
+					"name" : "NSDS_CUAS",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "gnc::@421175659c12465990e2",
+					"jsonFile" : "target-gnc-Debug-7f7fe0f9b0a2a23f8e25.json",
+					"name" : "gnc",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "lidar::@7026b934f07145c64942",
+					"jsonFile" : "target-lidar-Debug-a28488d747fddc3ae885.json",
+					"name" : "lidar",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "util::@23b027168f11ea0d609c",
+					"jsonFile" : "target-util-Debug-d2ee3d988eaf7e592737.json",
+					"name" : "util",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug",
+		"source" : "C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 10
+	}
+}

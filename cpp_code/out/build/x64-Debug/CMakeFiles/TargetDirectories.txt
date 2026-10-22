@@ -1,0 +1,12 @@
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/CMakeFiles/NSDS_CUAS.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/utility/CMakeFiles/util.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/utility/CMakeFiles/edit_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/utility/CMakeFiles/rebuild_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/gnc/CMakeFiles/gnc.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/gnc/CMakeFiles/edit_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/gnc/CMakeFiles/rebuild_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/lidar/CMakeFiles/lidar.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/lidar/CMakeFiles/edit_cache.dir
+C:/Programming/Projects/C-UAS/NSDS-Counter-UAS/cpp_code/out/build/x64-Debug/lidar/CMakeFiles/rebuild_cache.dir
