@@ -8,8 +8,6 @@ add_library(util STATIC
 	math/Vector.h
 )
 
-set_target_properties(util PROPERTIES LINKER_LANGUAGE CXX)
-
 target_include_directories(util
 	PUBLIC
 		${CMAKE_SOURCE_DIR}

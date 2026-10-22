@@ -12,5 +12,7 @@ add_executable(NSDS_CUAS sentry.cpp)
 
 target_link_libraries(NSDS_CUAS 
 	PRIVATE 
+		util
 		gnc
+		lidar
 )
